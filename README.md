@@ -116,6 +116,12 @@ server {
     }
 }
 
+server {
+    listen 80;
+    server_name nakeddomain.com;
+    return 301 https://www.domain.com$request_uri;
+}
+
 # Link and enable the Nginx site:
 
 sudo ln -s /etc/nginx/sites-available/myproject /etc/nginx/sites-enabled/
