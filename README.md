@@ -1,61 +1,71 @@
-# django-nginx-gunicorn
-Handle Django web app with nginx and gunicorn self documentation
+# Django with Nginx and Gunicorn: A Self-Documentation Guide
 
-# Before starting update packages it's optimal 
-apt update -y
-apt upgrade -y
+This guide covers the setup of a Django web application using Nginx and Gunicorn. It includes steps for package updates, user creation, installation of dependencies, and configurations for Gunicorn and Nginx.
 
-# create user if you don't have any without root user. 'master' in this sample, change it with your prefered user name 
+## Initial Setup and Package Updates
 
-adduser master 
+First, update your packages (optimal):
 
-# assing user sudo command
+sudo apt update -y
+sudo apt upgrade -y
 
-usermod -aG sudo master
+## User Creation and Permissions
 
-# add user to www-data. we will use this group in Gunicorn and nginx permissions who could override and write .conf and .service files
+Create a non-root user (e.g., 'master'). Replace 'master' with your preferred username:
 
-usermod -aG www-data master
+sudo adduser master
+sudo usermod -aG sudo master
+sudo usermod -aG www-data master
 
-# login with new user
+Log in with the new user:
 
 su - master
 
-# install dependencies packages. It can be changed Google it. 
+## Installing Dependencies
+
+Install necessary packages including PostgreSQL, Python, and Nginx (google it):
 
 sudo apt install postgresql postgresql-contrib python3-pip python3-dev libpq-dev nginx -y
 
-# create postgresl database and user if you needed 
+## Database Setup
 
-# create new virtualenv. You can change the name 'virtualenv'. I prefer install it under project file. don't forget to add .gitignore
+Create a PostgreSQL database and user as needed.
+
+## Python Virtual Environment
+
+Create a new virtual environment. It's recommended to install this under your project directory. Add the virtual environment directory to .gitignore.
 
 sudo -H pip3 install virtualenv
 
-# install Django web app dependencies with pip 
+## Django Application Setup
 
-pip -r install requirements.txt
+Install Django web app dependencies:
 
-# check psycopg pip if you user postgress. Install it with binary 
-pip install django gunicorn psycopg
+pip install -r requirements.txt
 
+If using PostgreSQL, install psycopg2:
 
-# add static root to settings.py and statics to urls.py 
+pip install psycopg2-binary (check it)
 
-# migrate database
+Add STATIC_ROOT to settings.py and update urls.py for static files.
 
-pyhon manage.py makemigrations
-python manage.py migrate 
+Migrate the database:
 
-#create superuser and collecstatics
+python manage.py makemigrations
+python manage.py migrate
+
+Create a superuser and collect static files:
 
 ./manage.py createsuperuser
 ./manage.py collectstatic
 
-# create gunicorn service file to start gunicorn process. File name optimal, you can change it. 
+## Gunicorn Service Configuration
+
+Create a Gunicorn service file(file name depends to you):
 
 sudo nano /etc/systemd/system/gunicorn.service
 
-# add below text to .service file
+Add the following configuration to the .service file:
 
 [Unit]
 Description=gunicorn daemon
@@ -65,93 +75,58 @@ After=network.target
 User=username
 Group=www-data
 WorkingDirectory=/home/username/projectroot
-ExecStart=/home/username/projectroot/projectenv/bin/gunicorn --access-logfile - --workers 4 --bind unix:/home/username/projectroot/name.sock djangoproject.wsgi:application
+ExecStart=/home/username/projectroot/env/bin/gunicorn --access-logfile - --workers 4 --bind unix:/home/username/projectroot/app.sock myproject.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
 
-# update gunicorn service. Name will be .service file name 
+Reload and start the Gunicorn service:
 
 sudo systemctl daemon-reload
-sudo systemctl start name 
+sudo systemctl start gunicorn
 
-# create nginx .conf file 
+## Nginx Configuration
 
-sudo nano /etc/nginx/sites-available/djangoproject 
+Create an Nginx configuration file:
 
-# add this line to djangoproject.conf 
+sudo nano /etc/nginx/sites-available/myproject
 
+Add the following server block to the myproject configuration:
 
 server {
     listen 80;
-    server_name www.domainname.com;
-    client_max_body_size 75M;  
+    server_name www.yourdomain.com;
+    client_max_body_size 75M; 
     location = /favicon.ico { access_log off; log_not_found off; }
-    # Django media
-    location /media/  {
-        root /path/to/your/mysite/media; 
-    }
     location /static/ {
-        root /path/to/your/mysite/static; 
+        root /home/username/projectroot;
+    }
+    location /media/ {
+        root /home/username/projectroot;
     }
     location / {
         include proxy_params;
-        proxy_pass http://unix:/home/username/projectroot/name.sock;
+        proxy_pass http://unix:/home/username/projectroot/app.sock;
     }
 }
 
-# if you haven't change dns settings yet. Update it as below text.
+Link and enable the Nginx site:
 
-a point @ or empty to host ip
-cname point www to host name 
-
-# also if you user www subdomain you need to add www.domianname.com to servername 
-
-# link to nginx available to enable folder
-
-sudo ln -s /etc/nginx/sites-available/djangoproject /etc/nginx/sites-enabled/
-
-
-# update and push nginx configurtion
-
+sudo ln -s /etc/nginx/sites-available/myproject /etc/nginx/sites-enabled/
 sudo nginx -t
-
 sudo systemctl restart nginx
 
-# check status gunicorn and nginx. socket name can be diffrent. 
+## Finalizing Setup
 
-sudo systemctl status servicefilename
+- Update DNS settings as needed. a point empty or @ to host ip, cname point www to naked domain name , optimal -  you can add aaaa ipv6 record.
+- Check the status of Gunicorn and Nginx services.
+- Start and enable the Gunicorn socket.
+- Configure UFW to allow 'Nginx Full'.
+- Install and configure HTTPS using Certbot.
 
-sudo systemctl status nginx
+## HTTPS Configuration
 
-# start and enable gunicorn socket 
-
-sudo systemctl start gunicorn.socket
-sudo systemctl enable gunicorn.socket
-
-# check status 
-
-sudo systemctl status gunicorn.socket
-
-# enable uwf and port nginx
-
-sudo ufw allow 'Nginx Full'
-
-# install HTTPS 
-
-sudo snap install --classic certbot 
-
+sudo snap install --classic certbot
 sudo ln -s /snap/bin/certbot /usr/bin/certbot
-
 sudo certbot --nginx
-
-# test renewal
-
 sudo certbot renew --dry-run
-
-
-
-
-
-
-
