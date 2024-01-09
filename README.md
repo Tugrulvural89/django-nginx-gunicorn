@@ -37,6 +37,8 @@ Create a new virtual environment. It's recommended to install this under your pr
 
 sudo -H pip3 install virtualenv
 
+virtualenv venv
+
 ## Django Application Setup
 
 Install Django web app dependencies:
