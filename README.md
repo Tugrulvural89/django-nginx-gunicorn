@@ -45,29 +45,33 @@ Install Django web app dependencies:
 
 pip install -r requirements.txt
 
-If using PostgreSQL, install psycopg2:
+# install gunicorn
+
+pip install gunicorn
+
+# If using PostgreSQL, install psycopg2:
 
 pip install psycopg2-binary (check it)
 
-Add STATIC_ROOT to settings.py and update urls.py for static files.
+# Add STATIC_ROOT to settings.py and update urls.py for static files.
 
-Migrate the database:
+# Migrate the database:
 
 python manage.py makemigrations
 python manage.py migrate
 
-Create a superuser and collect static files:
+# Create a superuser and collect static files:
 
 ./manage.py createsuperuser
 ./manage.py collectstatic
 
 ## Gunicorn Service Configuration
 
-Create a Gunicorn service file(file name depends to you):
+# Create a Gunicorn service file(file name depends to you):
 
 sudo nano /etc/systemd/system/gunicorn.service
 
-Add the following configuration to the .service file:
+# Add the following configuration to the .service file:
 
 [Unit]
 Description=gunicorn daemon
@@ -82,18 +86,18 @@ ExecStart=/home/username/projectroot/env/bin/gunicorn --access-logfile - --worke
 [Install]
 WantedBy=multi-user.target
 
-Reload and start the Gunicorn service:
+# Reload and start the Gunicorn service:
 
 sudo systemctl daemon-reload
 sudo systemctl start gunicorn
 
 ## Nginx Configuration
 
-Create an Nginx configuration file:
+# Create an Nginx configuration file:
 
 sudo nano /etc/nginx/sites-available/myproject
 
-Add the following server block to the myproject configuration:
+# Add the following server block to the myproject configuration:
 
 server {
     listen 80;
@@ -112,7 +116,7 @@ server {
     }
 }
 
-Link and enable the Nginx site:
+# Link and enable the Nginx site:
 
 sudo ln -s /etc/nginx/sites-available/myproject /etc/nginx/sites-enabled/
 sudo nginx -t
